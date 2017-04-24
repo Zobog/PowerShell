@@ -29,9 +29,20 @@ foreach ($Server in $Servers) {
         }
 
         foreach ($Process in $Processes) {
-            $ServiceApps[$Process.Id]
-            '{0} MB' -f ($Process.WorkingSet64 / 1mb)
-            Get-Counter -Counter "\Process($($Process.Name))\% Processor Time" -ComputerName $Server
+            Get-Counter -Counter "\Process($($Process.Name))\% Processor Time" -ComputerName $Server |
+            Select-Object -Property TimeStamp, @{
+                Label = 'ProcessId'
+                Expression = {$Process.Id}
+            }, @{
+                Label = 'Application'
+                Expression = {$ServiceApps[$Process.Id]}
+            }, @{
+                Label = 'WorkingSet'
+                Expression = {'{0} MB' -f ($Process.WorkingSet64 / 1mb)}
+            }, @{
+                Label = 'CPU'
+                Expression = {$_.CounterSamples.CookedValue}
+            }
         }
     }
 }
